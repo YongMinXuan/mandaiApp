@@ -1,0 +1,7 @@
+export const GLOBALVARS = {
+  CREATE_TASK: 1,
+  UPDATE_TASK: 2,
+  DELETE_TASK: 3,
+  READ_TASK: 4,
+  READ_ALL_TASKS: 5,
+};

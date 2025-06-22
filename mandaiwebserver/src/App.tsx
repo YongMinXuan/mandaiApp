@@ -1,8 +1,10 @@
+// frontend/src/App.tsx
 import React, { useState, useEffect } from "react";
 import { Task, CreateTaskDto, UpdateTaskDto } from "./types";
 import { getTasks, createTask, updateTask, deleteTask } from "./api/taskApi";
 import Login from "./components/Login";
 import { jwtDecode } from "jwt-decode"; // for decoding JWT (install: npm install jwt-decode)
+import { GLOBALVARS } from "./globalvariable/globalvars"; // NEW: Import permission constants
 
 // IMPORTANT: Install jwt-decode library for decoding the token on the frontend
 // npm install jwt-decode
@@ -13,17 +15,25 @@ function App() {
   const [newTaskDescription, setNewTaskDescription] = useState<string>("");
   const [editingTask, setEditingTask] = useState<Task | null>(null);
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
-  const [currentUserId, setCurrentUserId] = useState<number | null>(null); // Still useful to know who is logged in
+  const [currentUserPermissions, setCurrentUserPermissions] = useState<
+    number[]
+  >([]); // UPDATED: Store user permissions as numbers
+  const [currentUserId, setCurrentUserId] = useState<number | null>(null); // Store current user ID
 
   useEffect(() => {
     const token = localStorage.getItem("token");
     if (token) {
       try {
-        const decodedToken: { ACCESS_ID: number; USERNAME: string } =
-          jwtDecode(token);
+        // UPDATED: Decode permissions from JWT (now numbers)
+        const decodedToken: {
+          ACCESS_ID: number;
+          USERNAME: string;
+          permissions: number[];
+        } = jwtDecode(token);
         setIsAuthenticated(true);
+        setCurrentUserPermissions(decodedToken.permissions || []); // Store permissions
         setCurrentUserId(decodedToken.ACCESS_ID);
-        fetchTasks(); // Fetch tasks if authenticated
+        fetchTasks(decodedToken.permissions); // Pass permissions to fetchTasks
       } catch (error) {
         console.error("Failed to decode token:", error);
         handleLogout(); // Log out if token is invalid
@@ -35,11 +45,16 @@ function App() {
     const token = localStorage.getItem("token");
     if (token) {
       try {
-        const decodedToken: { ACCESS_ID: number; USERNAME: string } =
-          jwtDecode(token);
+        // UPDATED: Decode permissions from JWT (now numbers)
+        const decodedToken: {
+          ACCESS_ID: number;
+          USERNAME: string;
+          permissions: number[];
+        } = jwtDecode(token);
         setIsAuthenticated(true);
+        setCurrentUserPermissions(decodedToken.permissions || []); // Store permissions
         setCurrentUserId(decodedToken.ACCESS_ID);
-        fetchTasks(); // Fetch tasks after login
+        fetchTasks(decodedToken.permissions); // Fetch tasks after login
       } catch (error) {
         console.error("Login success, but token decode failed:", error);
         handleLogout();
@@ -50,16 +65,36 @@ function App() {
   const handleLogout = () => {
     localStorage.removeItem("token");
     setIsAuthenticated(false);
+    setCurrentUserPermissions([]); // Clear permissions on logout
     setCurrentUserId(null);
     setTasks([]);
     setEditingTask(null);
-    //alert("Logged out successfully.");
+    alert("Logged out successfully.");
   };
 
-  const fetchTasks = async () => {
+  // Helper function to check if current user has a specific permission ID
+  const hasPermission = (permissionId: number): boolean => {
+    return currentUserPermissions.includes(permissionId);
+  };
+
+  const fetchTasks = async (permissions: number[] = currentUserPermissions) => {
+    // Receive permissions as parameter
     try {
+      // Frontend check: User must have 'Read Task' or 'Read_All_Tasks' to even attempt fetching
+      if (
+        !permissions.includes(GLOBALVARS.READ_TASK) &&
+        !permissions.includes(GLOBALVARS.READ_ALL_TASKS)
+      ) {
+        setTasks([]); // Clear tasks if not authorized to read anything
+        return;
+      }
       const data = await getTasks();
-      setTasks(data);
+      // Client-side filter: If user doesn't have 'Read_All_Tasks', only show their own tasks
+      if (!permissions.includes(GLOBALVARS.READ_ALL_TASKS) && currentUserId) {
+        setTasks(data.filter((task) => task.CREATED_BY === currentUserId));
+      } else {
+        setTasks(data);
+      }
     } catch (error: any) {
       console.error("Error fetching tasks:", error);
       if (error.response?.status === 401 || error.response?.status === 403) {
@@ -77,6 +112,11 @@ function App() {
       alert("Task title cannot be empty!");
       return;
     }
+    if (!hasPermission(GLOBALVARS.CREATE_TASK)) {
+      // Frontend check before API call using ID
+      alert("You do not have permission to create tasks.");
+      return;
+    }
 
     try {
       const newTaskData: CreateTaskDto = {
@@ -89,7 +129,7 @@ function App() {
       setNewTaskTitle("");
       setNewTaskDescription("");
       fetchTasks(); // Refresh the list
-      //alert("Task created successfully!");
+      alert("Task created successfully!");
     } catch (error: any) {
       console.error("Error creating task:", error);
       alert(error.response?.data?.message || "Failed to create task.");
@@ -97,7 +137,22 @@ function App() {
   };
 
   const handleEditClick = (task: Task) => {
-    setEditingTask({ ...task }); // Create a copy to edit
+    // Frontend check: Can user update tasks in general?
+    if (!hasPermission(GLOBALVARS.UPDATE_TASK)) {
+      // Check using ID
+      alert("You do not have permission to update tasks.");
+      return;
+    }
+    // Frontend check: Can user update THIS specific task (only their own unless admin-like)
+    if (
+      !hasPermission(GLOBALVARS.READ_ALL_TASKS) &&
+      task.CREATED_BY !== currentUserId
+    ) {
+      // Check using ID for Read_All_Tasks
+      alert("You can only update your own tasks.");
+      return;
+    }
+    setEditingTask({ ...task });
   };
 
   const handleUpdateTask = async (e: React.FormEvent) => {
@@ -106,29 +161,55 @@ function App() {
       alert("Task title cannot be empty!");
       return;
     }
+    // Re-check permissions before API call (good practice)
+    if (!hasPermission(GLOBALVARS.UPDATE_TASK)) {
+      // Check using ID
+      alert("You do not have permission to update tasks.");
+      return;
+    }
 
     try {
       const updateData: UpdateTaskDto = {
         TITLE: editingTask.TITLE,
-        DESCRIPTION: editingTask?.DESCRIPTION,
+        DESCRIPTION: editingTask.DESCRIPTION,
         STATUS: editingTask.STATUS,
       };
       await updateTask(editingTask.TASK_ID, updateData);
-      setEditingTask(null); // Exit editing mode
-      fetchTasks(); // Refresh the list
-      //alert("Task updated successfully!");
+      setEditingTask(null);
+      fetchTasks();
+      alert("Task updated successfully!");
     } catch (error: any) {
       console.error("Error updating task:", error);
       alert(error.response?.data?.message || "Failed to update task.");
     }
   };
 
-  const handleDeleteTask = async (taskId: number) => {
-    if (window.confirm("Are you sure you want to delete this task?")) {
+  const handleDeleteTask = async (
+    taskId: number,
+    taskCreatorId: number | null
+  ) => {
+    // Added taskCreatorId to check ownership
+    // Frontend check: Can user delete tasks in general?
+    if (!hasPermission(GLOBALVARS.DELETE_TASK)) {
+      // Check using ID
+      alert("You do not have permission to delete tasks.");
+      return;
+    }
+    // Frontend check: Can user delete THIS specific task (only their own unless admin-like)
+    if (
+      !hasPermission(GLOBALVARS.READ_ALL_TASKS) &&
+      taskCreatorId !== currentUserId
+    ) {
+      // Check using ID for Read_All_Tasks
+      alert("You can only delete your own tasks.");
+      return;
+    }
+
+    if (window.confirm("Are you sure you want to soft-delete this task?")) {
       try {
         await deleteTask(taskId);
         fetchTasks();
-        //alert("Task deleted successfully!");
+        alert("Task soft-deleted successfully!");
       } catch (error: any) {
         console.error("Error deleting task:", error);
         alert(error.response?.data?.message || "Failed to soft-delete task.");
@@ -166,68 +247,79 @@ function App() {
         </button>
       </div>
 
-      {/* Task Creation Form - always visible if authenticated */}
-      <h2>Create New Task</h2>
-      <form
-        onSubmit={handleCreateTask}
-        style={{
-          marginBottom: "20px",
-          border: "1px solid #ccc",
-          padding: "15px",
-          borderRadius: "8px",
-        }}
-      >
-        <div style={{ marginBottom: "10px" }}>
-          <label htmlFor="title">Title:</label>
-          <input
-            type="text"
-            id="title"
-            value={newTaskTitle}
-            onChange={(e) => setNewTaskTitle(e.target.value)}
-            required
+      {/* Task Creation Form - only visible if user has 'Create Task' permission */}
+      {hasPermission(GLOBALVARS.CREATE_TASK) && ( // Check using ID
+        <>
+          <h2>Create New Task</h2>
+          <form
+            onSubmit={handleCreateTask}
             style={{
-              width: "calc(100% - 100px)",
-              padding: "8px",
-              marginLeft: "10px",
+              marginBottom: "20px",
+              border: "1px solid #ccc",
+              padding: "15px",
+              borderRadius: "8px",
             }}
-          />
-        </div>
-        <div style={{ marginBottom: "10px" }}>
-          <label htmlFor="description">Description:</label>
-          <textarea
-            id="description"
-            value={newTaskDescription}
-            onChange={(e) => setNewTaskDescription(e.target.value)}
-            rows={3}
-            style={{
-              width: "calc(100% - 100px)",
-              padding: "8px",
-              marginLeft: "10px",
-            }}
-          ></textarea>
-        </div>
-        <button
-          type="submit"
-          style={{
-            padding: "10px 15px",
-            backgroundColor: "#4CAF50",
-            color: "white",
-            border: "none",
-            borderRadius: "5px",
-            cursor: "pointer",
-          }}
-        >
-          Add Task
-        </button>
-      </form>
+          >
+            <div style={{ marginBottom: "10px" }}>
+              <label htmlFor="title">Title:</label>
+              <input
+                type="text"
+                id="title"
+                value={newTaskTitle}
+                onChange={(e) => setNewTaskTitle(e.target.value)}
+                required
+                style={{
+                  width: "calc(100% - 100px)",
+                  padding: "8px",
+                  marginLeft: "10px",
+                }}
+              />
+            </div>
+            <div style={{ marginBottom: "10px" }}>
+              <label htmlFor="description">Description:</label>
+              <textarea
+                id="description"
+                value={newTaskDescription}
+                onChange={(e) => setNewTaskDescription(e.target.value)}
+                rows={3}
+                style={{
+                  width: "calc(100% - 100px)",
+                  padding: "8px",
+                  marginLeft: "10px",
+                }}
+              ></textarea>
+            </div>
+            <button
+              type="submit"
+              style={{
+                padding: "10px 15px",
+                backgroundColor: "#4CAF50",
+                color: "white",
+                border: "none",
+                borderRadius: "5px",
+                cursor: "pointer",
+              }}
+            >
+              Add Task
+            </button>
+          </form>
+        </>
+      )}
 
       {/* Task List */}
       <h2>My Tasks</h2>
       <ul style={{ listStyle: "none", padding: 0 }}>
-        {tasks.length === 0 ? (
-          <p>No tasks found. Create one above!</p>
+        {tasks.length === 0 &&
+        (hasPermission(GLOBALVARS.READ_TASK) ||
+          hasPermission(GLOBALVARS.READ_ALL_TASKS)) ? ( // Check using IDs
+          <p>No tasks found. Create one above or check your permissions.</p>
+        ) : tasks.length === 0 ? (
+          <p>
+            You do not have permission to view tasks. Please contact an
+            administrator.
+          </p>
         ) : (
-          tasks.map((task) => (
+          tasks.map((task: Task) => (
             <li
               key={task.TASK_ID}
               style={{
@@ -316,7 +408,9 @@ function App() {
               ) : (
                 // Display task details
                 <div>
-                  <h3>{task.TITLE}</h3>
+                  <h3>
+                    {task.TITLE} {task.IS_DELETED === true && " (DELETED)"}
+                  </h3>
                   <p>Description: {task.DESCRIPTION || "N/A"}</p>
                   <p>Status: {task.STATUS}</p>
                   <p>
@@ -328,34 +422,45 @@ function App() {
                   </p>
                   {task.IS_DELETED === false && (
                     <>
-                      {/* Edit and Delete buttons are always visible if task is not deleted, backend will handle authorization */}
-                      <button
-                        onClick={() => handleEditClick(task)}
-                        style={{
-                          padding: "8px 12px",
-                          backgroundColor: "#ffc107",
-                          color: "white",
-                          border: "none",
-                          borderRadius: "5px",
-                          cursor: "pointer",
-                          marginRight: "5px",
-                        }}
-                      >
-                        Edit
-                      </button>
-                      <button
-                        onClick={() => handleDeleteTask(task.TASK_ID)}
-                        style={{
-                          padding: "8px 12px",
-                          backgroundColor: "#dc3545",
-                          color: "white",
-                          border: "none",
-                          borderRadius: "5px",
-                          cursor: "pointer",
-                        }}
-                      >
-                        Delete
-                      </button>
+                      {/* Show Edit button only if user has permission AND can edit THIS task */}
+                      {hasPermission(GLOBALVARS.UPDATE_TASK) &&
+                        (hasPermission(GLOBALVARS.READ_ALL_TASKS) ||
+                          task.CREATED_BY === currentUserId) && (
+                          <button
+                            onClick={() => handleEditClick(task)}
+                            style={{
+                              padding: "8px 12px",
+                              backgroundColor: "#ffc107",
+                              color: "white",
+                              border: "none",
+                              borderRadius: "5px",
+                              cursor: "pointer",
+                              marginRight: "5px",
+                            }}
+                          >
+                            Edit
+                          </button>
+                        )}
+                      {/* Show Delete button only if user has permission AND can delete THIS task */}
+                      {hasPermission(GLOBALVARS.DELETE_TASK) &&
+                        (hasPermission(GLOBALVARS.READ_ALL_TASKS) ||
+                          task.CREATED_BY === currentUserId) && (
+                          <button
+                            onClick={() =>
+                              handleDeleteTask(task.TASK_ID, task.CREATED_BY)
+                            }
+                            style={{
+                              padding: "8px 12px",
+                              backgroundColor: "#dc3545",
+                              color: "white",
+                              border: "none",
+                              borderRadius: "5px",
+                              cursor: "pointer",
+                            }}
+                          >
+                            Delete
+                          </button>
+                        )}
                     </>
                   )}
                 </div>
