@@ -4,12 +4,50 @@ import { Task, CreateTaskDto, UpdateTaskDto } from "./types";
 import { getTasks, createTask, updateTask, deleteTask } from "./api/taskApi";
 import Login from "./components/Login";
 import { jwtDecode } from "jwt-decode"; // for decoding JWT (install: npm install jwt-decode)
-import { GLOBALVARS } from "./globalvariable/globalvars"; // NEW: Import permission constants
+import { GLOBALVARS } from "./globalvariable/globalvariable"; // NEW: Import permission constants
+import AppTheme from "../src/theme/AppTheme";
+import MuiCard from "@mui/material/Card";
+import { styled } from "@mui/material/styles";
+import ColorModeSelect from "../src/theme/ColorModeSelect";
+import { Button, FormControl, TextField } from "@mui/material";
+import Typography from "@mui/material/Typography";
+import Modal from "@mui/material/Modal";
+import Box from "@mui/material/Box";
 
+const style = {
+  position: "absolute",
+  top: "50%",
+  left: "50%",
+  transform: "translate(-50%, -50%)",
+  width: 400,
+  bgcolor: "background.paper",
+  border: "2px solid #000",
+  boxShadow: 24,
+  p: 4,
+};
+
+const Card = styled(MuiCard)(({ theme }) => ({
+  display: "flex",
+  flexDirection: "column",
+  alignSelf: "center",
+  width: "100%",
+  padding: theme.spacing(4),
+  gap: theme.spacing(2),
+  margin: "auto",
+  [theme.breakpoints.up("sm")]: {
+    maxWidth: "450px",
+  },
+  boxShadow:
+    "hsla(220, 30%, 5%, 0.05) 0px 5px 15px 0px, hsla(220, 25%, 10%, 0.05) 0px 15px 35px -5px",
+  ...theme.applyStyles("dark", {
+    boxShadow:
+      "hsla(220, 30%, 5%, 0.5) 0px 5px 15px 0px, hsla(220, 25%, 10%, 0.08) 0px 15px 35px -5px",
+  }),
+}));
 // IMPORTANT: Install jwt-decode library for decoding the token on the frontend
 // npm install jwt-decode
 
-function App() {
+function App(props: { disableCustomTheme?: boolean }) {
   const [tasks, setTasks] = useState<Task[]>([]);
   const [newTaskTitle, setNewTaskTitle] = useState<string>("");
   const [newTaskDescription, setNewTaskDescription] = useState<string>("");
@@ -19,7 +57,9 @@ function App() {
     number[]
   >([]); // UPDATED: Store user permissions as numbers
   const [currentUserId, setCurrentUserId] = useState<number | null>(null); // Store current user ID
-
+  const [open, setOpen] = React.useState(false);
+  const handleOpenCreate = () => setOpen(true);
+  const handleCloseCreate = () => setOpen(false);
   useEffect(() => {
     const token = localStorage.getItem("token");
     if (token) {
@@ -31,7 +71,9 @@ function App() {
           permissions: number[];
         } = jwtDecode(token);
         setIsAuthenticated(true);
+        console.log("decodedToken", decodedToken);
         setCurrentUserPermissions(decodedToken.permissions || []); // Store permissions
+        console.log("currentUserPermissions", currentUserPermissions);
         setCurrentUserId(decodedToken.ACCESS_ID);
         fetchTasks(decodedToken.permissions); // Pass permissions to fetchTasks
       } catch (error) {
@@ -129,7 +171,8 @@ function App() {
       setNewTaskTitle("");
       setNewTaskDescription("");
       fetchTasks(); // Refresh the list
-      alert("Task created successfully!");
+      //alert("Task created successfully!");
+      handleCloseCreate();
     } catch (error: any) {
       console.error("Error creating task:", error);
       alert(error.response?.data?.message || "Failed to create task.");
@@ -222,254 +265,347 @@ function App() {
   }
 
   return (
-    <div style={{ padding: "20px", fontFamily: "Arial, sans-serif" }}>
-      <div
-        style={{
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "center",
-          marginBottom: "20px",
-        }}
-      >
-        <h1>Task Management App</h1>
-        <button
-          onClick={handleLogout}
+    <AppTheme {...props}>
+      <div style={{ padding: "20px", fontFamily: "Arial, sans-serif" }}>
+        {hasPermission(GLOBALVARS.CREATE_TASK) && ( // Check using ID
+          <>
+            {/* <h2>Create New Task</h2>
+            <form onSubmit={handleCreateTask}>
+              <div style={{ marginBottom: "10px" }}>
+                <label htmlFor="title">Title:</label>
+                <input
+                  type="text"
+                  id="title"
+                  value={newTaskTitle}
+                  onChange={(e) => setNewTaskTitle(e.target.value)}
+                  required
+                  style={{
+                    width: "calc(100% - 100px)",
+                    padding: "8px",
+                    marginLeft: "10px",
+                  }}
+                />
+              </div>
+              <div style={{ marginBottom: "10px" }}>
+                <label htmlFor="description">Description:</label>
+                <textarea
+                  id="description"
+                  value={newTaskDescription}
+                  onChange={(e) => setNewTaskDescription(e.target.value)}
+                  rows={3}
+                  style={{
+                    width: "calc(100% - 100px)",
+                    padding: "8px",
+                    marginLeft: "10px",
+                  }}
+                ></textarea>
+              </div>
+              <Button
+                type="submit"
+                style={{
+                  padding: "10px 15px",
+                  backgroundColor: "#4CAF50",
+                  color: "white",
+                  border: "none",
+                  borderRadius: "5px",
+                  cursor: "pointer",
+                }}
+              >
+                Add Task
+              </Button>
+            </form> */}
+
+            <div>
+              <Button
+                style={{
+                  padding: "8px 15px",
+                  backgroundColor: "#00973d",
+                  color: "white",
+                  border: "none",
+                  borderRadius: "5px",
+                  cursor: "pointer",
+                  position: "fixed",
+                  top: "1rem",
+                  left: "1rem",
+                }}
+                onClick={handleOpenCreate}
+              >
+                Create Tasks
+              </Button>
+              <Modal
+                open={open}
+                onClose={handleCloseCreate}
+                aria-labelledby="modal-modal-title"
+                aria-describedby="modal-modal-description"
+              >
+                <Box sx={style}>
+                  <Typography
+                    id="modal-modal-title"
+                    variant="h6"
+                    component="h2"
+                  >
+                    Create your tasks
+                  </Typography>
+                  <form onSubmit={handleCreateTask}>
+                    <div style={{ marginBottom: "10px" }}>
+                      <label htmlFor="title">Title:</label>
+                      <input
+                        type="text"
+                        id="title"
+                        value={newTaskTitle}
+                        onChange={(e) => setNewTaskTitle(e.target.value)}
+                        required
+                        style={{
+                          width: "calc(100% - 100px)",
+                          padding: "8px",
+                          marginLeft: "10px",
+                        }}
+                      />
+                    </div>
+                    <div style={{ marginBottom: "10px" }}>
+                      <label htmlFor="description">Description:</label>
+                      <textarea
+                        id="description"
+                        value={newTaskDescription}
+                        onChange={(e) => setNewTaskDescription(e.target.value)}
+                        rows={3}
+                        style={{
+                          width: "calc(100% - 50px)",
+                          height: "calc(100% - 50px)",
+
+                          padding: "8px",
+                          //marginLeft: "10px",
+                        }}
+                      ></textarea>
+                    </div>
+                    <Button
+                      type="submit"
+                      style={{
+                        padding: "10px 15px",
+                        backgroundColor: "#4CAF50",
+                        color: "white",
+                        border: "none",
+                        borderRadius: "5px",
+                        cursor: "pointer",
+                      }}
+                    >
+                      Add Task
+                    </Button>
+                  </form>
+                </Box>
+              </Modal>
+            </div>
+          </>
+        )}
+        <ColorModeSelect
+          sx={{ position: "fixed", top: "1rem", right: "6rem" }}
+        />
+        <div
           style={{
-            padding: "8px 15px",
-            backgroundColor: "#dc3545",
-            color: "white",
-            border: "none",
-            borderRadius: "5px",
-            cursor: "pointer",
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+            marginBottom: "20px",
           }}
         >
-          Logout
-        </button>
-      </div>
-
-      {/* Task Creation Form - only visible if user has 'Create Task' permission */}
-      {hasPermission(GLOBALVARS.CREATE_TASK) && ( // Check using ID
-        <>
-          <h2>Create New Task</h2>
-          <form
-            onSubmit={handleCreateTask}
+          {/* <h1>Task Management App</h1> */}
+          <Button
+            onClick={handleLogout}
             style={{
-              marginBottom: "20px",
-              border: "1px solid #ccc",
-              padding: "15px",
-              borderRadius: "8px",
+              padding: "8px 15px",
+              backgroundColor: "#dc3545",
+              color: "white",
+              border: "none",
+              borderRadius: "5px",
+              cursor: "pointer",
+              position: "fixed",
+              top: "1rem",
+              right: "1rem",
             }}
           >
-            <div style={{ marginBottom: "10px" }}>
-              <label htmlFor="title">Title:</label>
-              <input
-                type="text"
-                id="title"
-                value={newTaskTitle}
-                onChange={(e) => setNewTaskTitle(e.target.value)}
-                required
+            Logout
+          </Button>
+        </div>
+        {/* Task Creation Form - only visible if user has 'Create Task' permission */}
+        {/* Task List */}
+        <Typography
+          variant="h2"
+          component="h2"
+          sx={{ textAlign: "center", marginBottom: 2 }}
+        >
+          My Tasks{" "}
+        </Typography>{" "}
+        <ul style={{ listStyle: "none", padding: 0 }}>
+          {tasks.length === 0 &&
+          (hasPermission(GLOBALVARS.READ_TASK) ||
+            hasPermission(GLOBALVARS.READ_ALL_TASKS)) ? ( // Check using IDs
+            <p>No tasks found. Create one above or check your permissions.</p>
+          ) : tasks.length === 0 ? (
+            <p>
+              You do not have permission to view tasks. Please contact an
+              administrator.
+            </p>
+          ) : (
+            tasks.map((task: Task) => (
+              <li
+                key={task.TASK_ID}
                 style={{
-                  width: "calc(100% - 100px)",
-                  padding: "8px",
-                  marginLeft: "10px",
+                  marginBottom: "2rem",
+                  //backgroundColor: task.IS_DELETED === true ? "#fdd" : "#fff", // Highlight soft-deleted tasks (boolean)
                 }}
-              />
-            </div>
-            <div style={{ marginBottom: "10px" }}>
-              <label htmlFor="description">Description:</label>
-              <textarea
-                id="description"
-                value={newTaskDescription}
-                onChange={(e) => setNewTaskDescription(e.target.value)}
-                rows={3}
-                style={{
-                  width: "calc(100% - 100px)",
-                  padding: "8px",
-                  marginLeft: "10px",
-                }}
-              ></textarea>
-            </div>
-            <button
-              type="submit"
-              style={{
-                padding: "10px 15px",
-                backgroundColor: "#4CAF50",
-                color: "white",
-                border: "none",
-                borderRadius: "5px",
-                cursor: "pointer",
-              }}
-            >
-              Add Task
-            </button>
-          </form>
-        </>
-      )}
-
-      {/* Task List */}
-      <h2>My Tasks</h2>
-      <ul style={{ listStyle: "none", padding: 0 }}>
-        {tasks.length === 0 &&
-        (hasPermission(GLOBALVARS.READ_TASK) ||
-          hasPermission(GLOBALVARS.READ_ALL_TASKS)) ? ( // Check using IDs
-          <p>No tasks found. Create one above or check your permissions.</p>
-        ) : tasks.length === 0 ? (
-          <p>
-            You do not have permission to view tasks. Please contact an
-            administrator.
-          </p>
-        ) : (
-          tasks.map((task: Task) => (
-            <li
-              key={task.TASK_ID}
-              style={{
-                border: "1px solid #eee",
-                padding: "15px",
-                marginBottom: "10px",
-                borderRadius: "8px",
-                backgroundColor: task.IS_DELETED === true ? "#fdd" : "#fff", // Highlight soft-deleted tasks (boolean)
-              }}
-            >
-              {editingTask && editingTask.TASK_ID === task.TASK_ID ? (
-                // Editing form for task
-                <form onSubmit={handleUpdateTask}>
-                  <input
-                    type="text"
-                    value={editingTask.TITLE}
-                    onChange={(e) =>
-                      setEditingTask({ ...editingTask, TITLE: e.target.value })
-                    }
-                    required
-                    style={{
-                      width: "100%",
-                      padding: "8px",
-                      marginBottom: "8px",
-                    }}
-                  />
-                  <textarea
-                    value={editingTask.DESCRIPTION || ""}
-                    onChange={(e) =>
-                      setEditingTask({
-                        ...editingTask,
-                        DESCRIPTION: e.target.value,
-                      })
-                    }
-                    rows={2}
-                    style={{
-                      width: "100%",
-                      padding: "8px",
-                      marginBottom: "8px",
-                    }}
-                  ></textarea>
-                  <select
-                    value={editingTask.STATUS}
-                    onChange={(e) =>
-                      setEditingTask({
-                        ...editingTask,
-                        STATUS: e.target.value as any,
-                      })
-                    }
-                    style={{ padding: "8px", marginRight: "8px" }}
-                  >
-                    <option value="pending">Pending</option>
-                    <option value="in-progress">In-Progress</option>
-                    <option value="completed">Completed</option>
-                    <option value="blocked">Blocked</option>
-                  </select>
-                  <button
-                    type="submit"
-                    style={{
-                      padding: "8px 12px",
-                      backgroundColor: "#007bff",
-                      color: "white",
-                      border: "none",
-                      borderRadius: "5px",
-                      cursor: "pointer",
-                      marginRight: "5px",
-                    }}
-                  >
-                    Save
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setEditingTask(null)}
-                    style={{
-                      padding: "8px 12px",
-                      backgroundColor: "#dc3545",
-                      color: "white",
-                      border: "none",
-                      borderRadius: "5px",
-                      cursor: "pointer",
-                    }}
-                  >
-                    Cancel
-                  </button>
-                </form>
-              ) : (
-                // Display task details
-                <div>
-                  <h3>
-                    {task.TITLE} {task.IS_DELETED === true && " (DELETED)"}
-                  </h3>
-                  <p>Description: {task.DESCRIPTION || "N/A"}</p>
-                  <p>Status: {task.STATUS}</p>
-                  <p>
-                    Created by: {task.createdBy?.USERNAME || "Unknown User"}
-                  </p>{" "}
-                  {/* Display username if loaded */}
-                  <p>
-                    Last Updated: {new Date(task.UPDATED_AT).toLocaleString()}
-                  </p>
-                  {task.IS_DELETED === false && (
-                    <>
-                      {/* Show Edit button only if user has permission AND can edit THIS task */}
-                      {hasPermission(GLOBALVARS.UPDATE_TASK) &&
-                        (hasPermission(GLOBALVARS.READ_ALL_TASKS) ||
-                          task.CREATED_BY === currentUserId) && (
-                          <button
-                            onClick={() => handleEditClick(task)}
-                            style={{
-                              padding: "8px 12px",
-                              backgroundColor: "#ffc107",
-                              color: "white",
-                              border: "none",
-                              borderRadius: "5px",
-                              cursor: "pointer",
-                              marginRight: "5px",
-                            }}
-                          >
-                            Edit
-                          </button>
-                        )}
-                      {/* Show Delete button only if user has permission AND can delete THIS task */}
-                      {hasPermission(GLOBALVARS.DELETE_TASK) &&
-                        (hasPermission(GLOBALVARS.READ_ALL_TASKS) ||
-                          task.CREATED_BY === currentUserId) && (
-                          <button
-                            onClick={() =>
-                              handleDeleteTask(task.TASK_ID, task.CREATED_BY)
-                            }
-                            style={{
-                              padding: "8px 12px",
-                              backgroundColor: "#dc3545",
-                              color: "white",
-                              border: "none",
-                              borderRadius: "5px",
-                              cursor: "pointer",
-                            }}
-                          >
-                            Delete
-                          </button>
-                        )}
-                    </>
+              >
+                <Card variant="outlined">
+                  {editingTask &&
+                  editingTask.TASK_ID === task.TASK_ID &&
+                  hasPermission(GLOBALVARS.UPDATE_TASK) ? (
+                    // Editing form for task
+                    <form onSubmit={handleUpdateTask}>
+                      <input
+                        type="text"
+                        value={editingTask.TITLE}
+                        onChange={(e) =>
+                          setEditingTask({
+                            ...editingTask,
+                            TITLE: e.target.value,
+                          })
+                        }
+                        required
+                        style={{
+                          width: "100%",
+                          padding: "8px",
+                          marginBottom: "8px",
+                        }}
+                      />
+                      <textarea
+                        value={editingTask.DESCRIPTION || ""}
+                        onChange={(e) =>
+                          setEditingTask({
+                            ...editingTask,
+                            DESCRIPTION: e.target.value,
+                          })
+                        }
+                        rows={2}
+                        style={{
+                          width: "100%",
+                          padding: "8px",
+                          marginBottom: "8px",
+                        }}
+                      ></textarea>
+                      <select
+                        value={editingTask.STATUS}
+                        onChange={(e) =>
+                          setEditingTask({
+                            ...editingTask,
+                            STATUS: e.target.value as any,
+                          })
+                        }
+                        style={{ padding: "8px", marginRight: "8px" }}
+                      >
+                        <option value="pending">Pending</option>
+                        <option value="in-progress">In-Progress</option>
+                        <option value="completed">Completed</option>
+                        <option value="blocked">Blocked</option>
+                      </select>
+                      <Button
+                        type="submit"
+                        style={{
+                          padding: "8px 12px",
+                          backgroundColor: "#007bff",
+                          color: "white",
+                          border: "none",
+                          borderRadius: "5px",
+                          cursor: "pointer",
+                          marginRight: "5px",
+                        }}
+                      >
+                        Save
+                      </Button>
+                      <Button
+                        type="button"
+                        onClick={() => setEditingTask(null)}
+                        style={{
+                          padding: "8px 12px",
+                          backgroundColor: "#dc3545",
+                          color: "white",
+                          border: "none",
+                          borderRadius: "5px",
+                          cursor: "pointer",
+                        }}
+                      >
+                        Cancel
+                      </Button>
+                    </form>
+                  ) : (
+                    // Display task details
+                    <div>
+                      <h3>
+                        {task.TITLE} {task.IS_DELETED === true && " (DELETED)"}
+                      </h3>
+                      <p>Description: {task.DESCRIPTION || "N/A"}</p>
+                      <p>Status: {task.STATUS}</p>
+                      <p>
+                        Created by: {task.createdBy?.USERNAME || "Unknown User"}
+                      </p>{" "}
+                      {/* Display username if loaded */}
+                      <p>
+                        Last Updated:{" "}
+                        {new Date(task.UPDATED_AT).toLocaleString()}
+                      </p>
+                      {task.IS_DELETED === false && (
+                        <>
+                          {/* Show Edit button only if user has permission AND can edit THIS task */}
+                          {hasPermission(GLOBALVARS.UPDATE_TASK) &&
+                            (hasPermission(GLOBALVARS.READ_ALL_TASKS) ||
+                              task.CREATED_BY === currentUserId) && (
+                              <Button
+                                onClick={() => handleEditClick(task)}
+                                style={{
+                                  padding: "8px 12px",
+                                  backgroundColor: "#ffc107",
+                                  color: "white",
+                                  border: "none",
+                                  borderRadius: "5px",
+                                  cursor: "pointer",
+                                  marginRight: "5px",
+                                }}
+                              >
+                                Edit
+                              </Button>
+                            )}
+                          {/* Show Delete button only if user has permission AND can delete THIS task */}
+                          {hasPermission(GLOBALVARS.DELETE_TASK) &&
+                            (hasPermission(GLOBALVARS.READ_ALL_TASKS) ||
+                              task.CREATED_BY === currentUserId) && (
+                              <Button
+                                onClick={() =>
+                                  handleDeleteTask(
+                                    task.TASK_ID,
+                                    task.CREATED_BY
+                                  )
+                                }
+                                style={{
+                                  padding: "8px 12px",
+                                  backgroundColor: "#dc3545",
+                                  color: "white",
+                                  border: "none",
+                                  borderRadius: "5px",
+                                  cursor: "pointer",
+                                }}
+                              >
+                                Delete
+                              </Button>
+                            )}
+                        </>
+                      )}
+                    </div>
                   )}
-                </div>
-              )}
-            </li>
-          ))
-        )}
-      </ul>
-    </div>
+                </Card>{" "}
+              </li>
+            ))
+          )}
+        </ul>
+      </div>
+    </AppTheme>
   );
 }
 

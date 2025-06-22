@@ -3,7 +3,7 @@ import axios from "axios";
 import { Task, CreateTaskDto, UpdateTaskDto } from "../types";
 
 // IMPORTANT: Make sure this matches your backend's URL and API prefix
-const API_BASE_URL = "http://localhost:3000/api"; // Use 5000 as per .env.example
+const API_BASE_URL = "http://localhost:5000/api"; // Use 5000 as per .env.example
 const api = axios.create({
   baseURL: API_BASE_URL,
 });
