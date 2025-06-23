@@ -1,7 +1,4 @@
 export const GLOBALVARS = {
-  ENCRYPTED_KEY:
-    "5e145c643fb463b9ee64be45f8aa63d4bdc5fc782bcf04e2e366dcbe350f7169eFnQJ/nIiGRsvGZk57hYmGPTce92IniAoKs7C/jzpklxChrs3AGwhv1d+1pt9Tmp4334e1533773db5dffd98e5b19c796306bbeb9fcf42f79218e7b5ae12bfd6eae" as const,
-  PASSKEY: "kzi}blYO&^PrO3O`H5h`?cq<Z[30Ju" as const,
   CREATE_TASK: 1,
   UPDATE_TASK: 2,
   DELETE_TASK: 3,
