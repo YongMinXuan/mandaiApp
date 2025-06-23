@@ -76,7 +76,7 @@ function Login(
     try {
       const data = await loginUser(username, password);
       localStorage.setItem("token", data.token); // Store the jwt token so that we can take it out and autheticate any users.
-      onLoginSuccess(); // Notify parent component of successful login
+      onLoginSuccess();
     } catch (err: any) {
       console.error("Login failed:", err);
       setError(
@@ -84,33 +84,6 @@ function Login(
       );
     }
   };
-
-  // const validateInputs = () => {
-  //   const email = document.getElementById("email") as HTMLInputElement;
-  //   const password = document.getElementById("password") as HTMLInputElement;
-
-  //   let isValid = true;
-
-  //   if (!email.value || !/\S+@\S+\.\S+/.test(email.value)) {
-  //     setEmailError(true);
-  //     setEmailErrorMessage("Please enter a valid email address.");
-  //     isValid = false;
-  //   } else {
-  //     setEmailError(false);
-  //     setEmailErrorMessage("");
-  //   }
-
-  //   if (!password.value || password.value.length < 6) {
-  //     setPasswordError(true);
-  //     setPasswordErrorMessage("Password must be at least 6 characters long.");
-  //     isValid = false;
-  //   } else {
-  //     setPasswordError(false);
-  //     setPasswordErrorMessage("");
-  //   }
-
-  //   return isValid;
-  // };
 
   return (
     <AppTheme {...props}>
@@ -148,7 +121,6 @@ function Login(
                 required
                 fullWidth
                 onChange={(e) => setUsername(e.target.value)}
-                // variant="outlined"
               />
             </FormControl>
             <FormControl>
@@ -179,79 +151,6 @@ function Login(
         </Card>
       </SignInContainer>
     </AppTheme>
-    // <div
-    //   style={{
-    //     padding: "20px",
-    //     fontFamily: "Arial, sans-serif",
-    //     maxWidth: "400px",
-    //     margin: "50px auto",
-    //     border: "1px solid #ccc",
-    //     borderRadius: "8px",
-    //     boxShadow: "0 2px 4px rgba(0,0,0,0.1)",
-    //   }}
-    // >
-    //   <h2>Login</h2>
-    //   {error && <p style={{ color: "red" }}>{error}</p>}
-    //   <form onSubmit={handleSubmit}>
-    //     <div style={{ marginBottom: "15px" }}>
-    //       <label
-    //         htmlFor="username"
-    //         style={{ display: "block", marginBottom: "5px" }}
-    //       >
-    //         Username:
-    //       </label>
-    //       <input
-    //         type="text"
-    //         id="username"
-    //         value={username}
-    //         onChange={(e) => setUsername(e.target.value)}
-    //         required
-    //         style={{
-    //           width: "100%",
-    //           padding: "8px",
-    //           border: "1px solid #ddd",
-    //           borderRadius: "4px",
-    //         }}
-    //       />
-    //     </div>
-    //     <div style={{ marginBottom: "15px" }}>
-    //       <label
-    //         htmlFor="password"
-    //         style={{ display: "block", marginBottom: "5px" }}
-    //       >
-    //         Password:
-    //       </label>
-    //       <input
-    //         type="password"
-    //         id="password"
-    //         value={password}
-    //         onChange={(e) => setPassword(e.target.value)}
-    //         required
-    //         style={{
-    //           width: "100%",
-    //           padding: "8px",
-    //           border: "1px solid #ddd",
-    //           borderRadius: "4px",
-    //         }}
-    //       />
-    //     </div>
-    //     <button
-    //       type="submit"
-    //       style={{
-    //         width: "100%",
-    //         padding: "10px",
-    //         backgroundColor: "#007bff",
-    //         color: "white",
-    //         border: "none",
-    //         borderRadius: "5px",
-    //         cursor: "pointer",
-    //         fontSize: "16px",
-    //       }}
-    //     >
-    //       Login
-    //     </button>
-    //   </form>
-    // </div>
   );
 }
 

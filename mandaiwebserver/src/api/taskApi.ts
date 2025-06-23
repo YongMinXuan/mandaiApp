@@ -1,9 +1,8 @@
-// frontend/src/api/taskApi.ts
 import axios from "axios";
 import { Task, CreateTaskDto, UpdateTaskDto } from "../types";
+import { GLOBALVARS } from "../globalvariable/globalvariable";
 
-// IMPORTANT: Make sure this matches your backend's URL and API prefix
-const API_BASE_URL = "http://localhost:5000/api"; // Use 5000 as per .env.example
+const API_BASE_URL = `http://localhost:${GLOBALVARS.PORT}/api`; // Use 5000 as per .env.example
 const api = axios.create({
   baseURL: API_BASE_URL,
 });
@@ -37,7 +36,6 @@ export const loginUser = async (
 // Existing Task API methods
 export const getTasks = async (): Promise<Task[]> => {
   const response = await api.get("/tasks");
-  console.log("response", response);
   return response.data;
 };
 

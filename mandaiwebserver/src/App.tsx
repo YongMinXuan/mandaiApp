@@ -3,8 +3,8 @@ import React, { useState, useEffect } from "react";
 import { Task, CreateTaskDto, UpdateTaskDto } from "./types";
 import { getTasks, createTask, updateTask, deleteTask } from "./api/taskApi";
 import Login from "./components/Login";
-import { jwtDecode } from "jwt-decode"; // for decoding JWT (install: npm install jwt-decode)
-import { GLOBALVARS } from "./globalvariable/globalvariable"; // NEW: Import permission constants
+import { jwtDecode } from "jwt-decode";
+import { GLOBALVARS } from "./globalvariable/globalvariable";
 import AppTheme from "../src/theme/AppTheme";
 import MuiCard from "@mui/material/Card";
 import { styled } from "@mui/material/styles";
@@ -51,8 +51,6 @@ const Card = styled(MuiCard)(({ theme }) => ({
       "hsla(220, 30%, 5%, 0.5) 0px 5px 15px 0px, hsla(220, 25%, 10%, 0.08) 0px 15px 35px -5px",
   }),
 }));
-// IMPORTANT: Install jwt-decode library for decoding the token on the frontend
-// npm install jwt-decode
 
 function App(props: { disableCustomTheme?: boolean }) {
   const theme = useTheme();
@@ -63,8 +61,8 @@ function App(props: { disableCustomTheme?: boolean }) {
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
   const [currentUserPermissions, setCurrentUserPermissions] = useState<
     number[]
-  >([]); // UPDATED: Store user permissions as numbers
-  const [currentUserId, setCurrentUserId] = useState<number | null>(null); // Store current user ID
+  >([]);
+  const [currentUserId, setCurrentUserId] = useState<number | null>(null);
   const [open, setOpen] = React.useState(false);
   const handleOpenCreate = () => setOpen(true);
   const handleCloseCreate = () => setOpen(false);
@@ -72,7 +70,6 @@ function App(props: { disableCustomTheme?: boolean }) {
     const token = localStorage.getItem("token");
     if (token) {
       try {
-        // UPDATED: Decode permissions from JWT (now numbers)
         const decodedToken: {
           ACCESS_ID: number;
           USERNAME: string;
@@ -83,7 +80,7 @@ function App(props: { disableCustomTheme?: boolean }) {
         setCurrentUserPermissions(decodedToken.permissions || []); // Store permissions
 
         setCurrentUserId(decodedToken.ACCESS_ID);
-        fetchTasks(decodedToken.permissions); // Pass permissions to fetchTasks
+        fetchTasks(decodedToken.permissions); // Make sure that the user has the correct permissions
       } catch (error) {
         handleLogout(); // Log out if token is invalid
       }
@@ -94,7 +91,6 @@ function App(props: { disableCustomTheme?: boolean }) {
     const token = localStorage.getItem("token");
     if (token) {
       try {
-        // UPDATED: Decode permissions from JWT (now numbers)
         const decodedToken: {
           ACCESS_ID: number;
           USERNAME: string;
@@ -126,16 +122,14 @@ function App(props: { disableCustomTheme?: boolean }) {
 
   const fetchTasks = async (permissions: number[] = currentUserPermissions) => {
     try {
-      // Frontend check: User must have 'Read Task' or 'Read_All_Tasks' to even attempt fetching
       if (
         !permissions.includes(GLOBALVARS.READ_TASK) &&
         !permissions.includes(GLOBALVARS.READ_ALL_TASKS)
       ) {
-        setTasks([]); // empty array if cannot read anything
+        setTasks([]); // cannot read anything
         return;
       }
       const data = await getTasks();
-      // Client-side filter: If user doesn't have 'Read_All_Tasks', only show their own tasks
       if (!permissions.includes(GLOBALVARS.READ_ALL_TASKS) && currentUserId) {
         setTasks(data.filter((task) => task.CREATED_BY === currentUserId));
       } else {
@@ -158,7 +152,6 @@ function App(props: { disableCustomTheme?: boolean }) {
       return;
     }
     if (!hasPermission(GLOBALVARS.CREATE_TASK)) {
-      // Frontend check before API call using ID. but will not even give him the button to click.
       alert("You do not have permission to create tasks.");
       return;
     }
@@ -168,12 +161,12 @@ function App(props: { disableCustomTheme?: boolean }) {
         TITLE: newTaskTitle,
         DESCRIPTION: newTaskDescription,
         STATUS: "pending",
-        CREATED_BY: currentUserId || 0, // Frontend sends creator ID, backend verifies
+        CREATED_BY: currentUserId || 0,
       };
       await createTask(newTaskData);
       setNewTaskTitle("");
       setNewTaskDescription("");
-      fetchTasks(); // Refresh the list
+      fetchTasks();
       handleCloseCreate();
     } catch (error: any) {
       alert(error.response?.data?.message || "Failed to create task.");
@@ -181,18 +174,14 @@ function App(props: { disableCustomTheme?: boolean }) {
   };
 
   const handleEditClick = (task: Task) => {
-    // Frontend check: Can user update tasks in general?
     if (!hasPermission(GLOBALVARS.UPDATE_TASK)) {
-      // Check using ID
       alert("You do not have permission to update tasks.");
       return;
     }
-    // Frontend check: Can user update THIS specific task (only their own unless admin-like)
     if (
       !hasPermission(GLOBALVARS.READ_ALL_TASKS) &&
       task.CREATED_BY !== currentUserId
     ) {
-      // Check using ID for Read_All_Tasks
       alert("You can only update your own tasks.");
       return;
     }
@@ -205,9 +194,7 @@ function App(props: { disableCustomTheme?: boolean }) {
       alert("Task title cannot be empty!");
       return;
     }
-    // Re-check permissions before API call (good practice)
     if (!hasPermission(GLOBALVARS.UPDATE_TASK)) {
-      // Check using ID
       alert("You do not have permission to update tasks.");
       return;
     }
@@ -221,7 +208,6 @@ function App(props: { disableCustomTheme?: boolean }) {
       await updateTask(editingTask.TASK_ID, updateData);
       setEditingTask(null);
       fetchTasks();
-      //alert("Task updated successfully!");
     } catch (error: any) {
       alert(error.response?.data?.message || "Failed to update task.");
     }
@@ -243,7 +229,7 @@ function App(props: { disableCustomTheme?: boolean }) {
     }
 
     if (window.confirm("Are you sure you want to delete this task?")) {
-      // deleting her will only be a soft-delete. the task will still be viewable in the database
+      // deleting here will only be a soft-delete. the task will still be viewable in the database
       try {
         await deleteTask(taskId);
         fetchTasks();
@@ -260,19 +246,9 @@ function App(props: { disableCustomTheme?: boolean }) {
   return (
     <Box sx={{ flexGrow: 1 }}>
       {" "}
-      {/* Main container for the whole app */}
-      {/* Header AppBar */}
       <AppTheme {...props}>
-        <AppBar
-          position="static"
-          color="transparent"
-          // sx={{
-          //   borderRadius: 2, // Rounded corners for AppBar
-          //   marginBottom: 3, // Spacing below the AppBar
-          // }}
-        >
+        <AppBar position="static" color="transparent">
           <Toolbar sx={{ justifyContent: "space-between" }}>
-            {/* Left Side: Create Task Button */}
             {hasPermission(GLOBALVARS.CREATE_TASK) && (
               <Button
                 variant="contained"
@@ -284,13 +260,9 @@ function App(props: { disableCustomTheme?: boolean }) {
               </Button>
             )}
 
-            {/* Right Side: Theme Switch and Logout Button */}
             <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
               {" "}
-              {/* Use Box for grouping and spacing */}
-              {/* Dark/Light Mode Switch - now a separate component */}
               <ColorModeSelect />
-              {/* Logout Button */}
               <Button
                 variant="contained"
                 color="error"
@@ -302,7 +274,6 @@ function App(props: { disableCustomTheme?: boolean }) {
             </Box>
           </Toolbar>
         </AppBar>
-        {/* Create Task Modal */}
         <Modal
           open={open}
           onClose={() => handleCloseCreate()}
@@ -333,13 +304,13 @@ function App(props: { disableCustomTheme?: boolean }) {
                 fullWidth
                 id="newTaskDescription"
                 label="Description"
-                multiline // Ensure multiline is active
-                minRows={3} // Set minimum rows
-                maxRows={10} // Set maximum rows before scrolling
-                variant="outlined" // Ensure consistent variant
+                multiline
+                minRows={3}
+                maxRows={10}
+                variant="outlined"
                 value={newTaskDescription}
                 onChange={(e) => setNewTaskDescription(e.target.value)}
-                sx={{ mb: 2 }} // Margin bottom for spacing
+                sx={{ mb: 2 }}
               />
               <Button
                 type="submit"
@@ -359,12 +330,8 @@ function App(props: { disableCustomTheme?: boolean }) {
             </form>
           </Box>
         </Modal>
-        {/* Main Content */}
         <Box sx={{ padding: "20px" }}>
           {" "}
-          {/* Add padding to main content area */}
-          {/* Task Creation Form has been moved into the Modal */}
-          {/* Task List */}
           <Typography
             variant="h5"
             component="h2"
@@ -397,7 +364,7 @@ function App(props: { disableCustomTheme?: boolean }) {
                 <li
                   key={task.TASK_ID}
                   style={{
-                    marginBottom: theme.spacing(2), // Responsive margin between cards
+                    marginBottom: theme.spacing(2),
                   }}
                 >
                   <MuiCard
@@ -407,19 +374,18 @@ function App(props: { disableCustomTheme?: boolean }) {
                       flexDirection: "column",
                       alignSelf: "center",
                       width: "100%",
-                      padding: theme.spacing(2), // Reduced card padding for list items
+                      padding: theme.spacing(2),
                       gap: theme.spacing(1),
-                      // margin: "auto", // Removed margin:auto if not needed
                       boxShadow:
                         task.IS_DELETED === true
                           ? "none"
-                          : "hsla(220, 30%, 5%, 0.05) 0px 5px 15px 0px", // Simplified boxShadow
+                          : "hsla(220, 30%, 5%, 0.05) 0px 5px 15px 0px",
                       backgroundColor:
                         task.IS_DELETED === true
                           ? theme.palette.action.disabledBackground
                           : theme.palette.background.paper,
                       color: theme.palette.text.primary,
-                      opacity: task.IS_DELETED === true ? 0.7 : 1, // Visually dim deleted tasks
+                      opacity: task.IS_DELETED === true ? 0.7 : 1,
                     }}
                   >
                     {editingTask && editingTask.TASK_ID === task.TASK_ID ? (

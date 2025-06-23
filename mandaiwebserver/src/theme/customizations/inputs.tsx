@@ -384,7 +384,7 @@ export const inputsCustomizations: Components<Theme> = {
       },
     },
   },
-  // MuiOutlinedInput: {
+
   //   styleOverrides: {
   //     input: {
   //       padding: 0,
