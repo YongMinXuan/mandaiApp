@@ -7,4 +7,5 @@ export const GLOBALVARS = {
   DELETE_TASK: 3,
   READ_TASK: 4,
   READ_ALL_TASKS: 5,
+  ADMINISTRATOR_RIGHTS: 6,
 };

@@ -64,7 +64,6 @@ export class TaskService {
     requestingUserId: number,
     userPermissions: number[]
   ): Promise<TASKS | null> {
-    // UPDATED: Accepts number[] for userPermissions
     const task = await this.taskRepository.findOne({
       where: { TASK_ID: id, IS_DELETED: false },
       relations: ["createdBy"],
@@ -73,7 +72,7 @@ export class TaskService {
     if (!task) return null;
 
     // Authorization check: User must have 'Read Task' permission for specific task,
-    // or 'Read_All_Tasks' for any task
+    // or 'Read_All_Tasks' to read all the tasks in the db itself.
     const canReadTask = this.hasPermission(
       userPermissions,
       GLOBALVARS.READ_TASK
@@ -100,7 +99,6 @@ export class TaskService {
     requestingUserId: number,
     userPermissions: number[]
   ): Promise<TASKS> {
-    // UPDATED: Accepts number[] for userPermissions
     // Authorization check: User must have 'Create Task' permission
     const canCreateTask = this.hasPermission(
       userPermissions,
@@ -119,7 +117,7 @@ export class TaskService {
     requestingUserId: number,
     userPermissions: number[]
   ): Promise<TASKS | null> {
-    // UPDATED: Accepts number[] for userPermissions
+    // Originally would have prefered using versioning. so that able to retrieve back older tasks.
     const task = await this.taskRepository.findOne({
       where: { TASK_ID: id, IS_DELETED: false },
       relations: ["createdBy"],
@@ -154,7 +152,6 @@ export class TaskService {
     requestingUserId: number,
     userPermissions: number[]
   ): Promise<TASKS | null> {
-    // UPDATED: Accepts number[] for userPermissions
     const task = await this.taskRepository.findOne({
       where: { TASK_ID: id, IS_DELETED: false },
       relations: ["createdBy"],
@@ -169,14 +166,17 @@ export class TaskService {
     const canReadAllTasks = this.hasPermission(
       userPermissions,
       GLOBALVARS.READ_ALL_TASKS
-    ); // Acting as Admin/Manager permission
-
+    ); // If you are admin, you should be able to view all the
+    const adminRights = this.hasPermission(
+      userPermissions,
+      GLOBALVARS.ADMINISTRATOR_RIGHTS
+    );
     if (!canDeleteTask) {
       throw new Error("Unauthorized to delete tasks.");
     }
 
-    // Further authorization: If not 'admin' (Read_All_Tasks), user can only delete their own task
-    if (!canReadAllTasks && task.CREATED_BY !== requestingUserId) {
+    // Further authorization: If not 'admin' (Read_All_Tasks), user can only delete their own task.
+    if (!adminRights && task.CREATED_BY !== requestingUserId) {
       throw new Error("Unauthorized to delete other users' tasks.");
     }
 
