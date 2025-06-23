@@ -28,6 +28,8 @@ CREATE TABLE ACCESS_MATRIX (
 );
 
 -- This is the table to define all the different roles that can be tagged to the user.
+
+
 CREATE TABLE ACCESS_MATRIX_ROLES (
     ROLE_ID INT AUTO_INCREMENT PRIMARY KEY,
     ROLE_NAME VARCHAR(100) NOT NULL UNIQUE, -- e.g., 'Admin', 'Editor', 'Viewer'
@@ -36,6 +38,8 @@ CREATE TABLE ACCESS_MATRIX_ROLES (
 );
 
 -- This is the table to define all the different permissions that can be tagged to the role.
+
+
 CREATE TABLE ACCESS_MATRIX_PERMISSIONS (
     PERMISSION_ID INT AUTO_INCREMENT PRIMARY KEY,
     PERMISSION_NAME VARCHAR(100) NOT NULL UNIQUE, 
@@ -44,6 +48,8 @@ CREATE TABLE ACCESS_MATRIX_PERMISSIONS (
 );
 
 -- This is the table to link the user and roles together.
+
+
 CREATE TABLE ACCESS_MATRIX_USR_ROLES (
     USER_ROLE_ID INT AUTO_INCREMENT PRIMARY KEY,
     ACCESS_ID INT NOT NULL,
@@ -55,6 +61,8 @@ CREATE TABLE ACCESS_MATRIX_USR_ROLES (
 );
 
 -- This is the table to link the user and roles together.
+
+
 CREATE TABLE ACCESS_MATRIX_ROLE_PERMS (
     ROLE_PERMISSION_ID INT AUTO_INCREMENT PRIMARY KEY,
     ROLE_ID INT NOT NULL,
@@ -66,6 +74,8 @@ CREATE TABLE ACCESS_MATRIX_ROLE_PERMS (
 );
 
 -- Contains task information, including ccratedby and soft-delete flag.
+
+
 CREATE TABLE TASKS (
     TASK_ID INT AUTO_INCREMENT PRIMARY KEY,
     TITLE VARCHAR(255) NOT NULL,
