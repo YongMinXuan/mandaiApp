@@ -71,13 +71,12 @@ function App(props: { disableCustomTheme?: boolean }) {
           permissions: number[];
         } = jwtDecode(token);
         setIsAuthenticated(true);
-        console.log("decodedToken", decodedToken);
+
         setCurrentUserPermissions(decodedToken.permissions || []); // Store permissions
-        console.log("currentUserPermissions", currentUserPermissions);
+
         setCurrentUserId(decodedToken.ACCESS_ID);
         fetchTasks(decodedToken.permissions); // Pass permissions to fetchTasks
       } catch (error) {
-        console.error("Failed to decode token:", error);
         handleLogout(); // Log out if token is invalid
       }
     }
@@ -98,7 +97,6 @@ function App(props: { disableCustomTheme?: boolean }) {
         setCurrentUserId(decodedToken.ACCESS_ID);
         fetchTasks(decodedToken.permissions); // Fetch tasks after login
       } catch (error) {
-        console.error("Login success, but token decode failed:", error);
         handleLogout();
       }
     }
@@ -111,7 +109,6 @@ function App(props: { disableCustomTheme?: boolean }) {
     setCurrentUserId(null);
     setTasks([]);
     setEditingTask(null);
-    alert("Logged out successfully.");
   };
 
   // Helper function to check if current user has a specific permission ID
@@ -120,14 +117,13 @@ function App(props: { disableCustomTheme?: boolean }) {
   };
 
   const fetchTasks = async (permissions: number[] = currentUserPermissions) => {
-    // Receive permissions as parameter
     try {
       // Frontend check: User must have 'Read Task' or 'Read_All_Tasks' to even attempt fetching
       if (
         !permissions.includes(GLOBALVARS.READ_TASK) &&
         !permissions.includes(GLOBALVARS.READ_ALL_TASKS)
       ) {
-        setTasks([]); // Clear tasks if not authorized to read anything
+        setTasks([]); // empty array if cannot read anything
         return;
       }
       const data = await getTasks();
@@ -138,7 +134,6 @@ function App(props: { disableCustomTheme?: boolean }) {
         setTasks(data);
       }
     } catch (error: any) {
-      console.error("Error fetching tasks:", error);
       if (error.response?.status === 401 || error.response?.status === 403) {
         alert("Session expired or unauthorized. Please log in again.");
         handleLogout();
@@ -155,7 +150,7 @@ function App(props: { disableCustomTheme?: boolean }) {
       return;
     }
     if (!hasPermission(GLOBALVARS.CREATE_TASK)) {
-      // Frontend check before API call using ID
+      // Frontend check before API call using ID. but will not even give him the button to click.
       alert("You do not have permission to create tasks.");
       return;
     }
@@ -171,10 +166,8 @@ function App(props: { disableCustomTheme?: boolean }) {
       setNewTaskTitle("");
       setNewTaskDescription("");
       fetchTasks(); // Refresh the list
-      //alert("Task created successfully!");
       handleCloseCreate();
     } catch (error: any) {
-      console.error("Error creating task:", error);
       alert(error.response?.data?.message || "Failed to create task.");
     }
   };
@@ -220,9 +213,8 @@ function App(props: { disableCustomTheme?: boolean }) {
       await updateTask(editingTask.TASK_ID, updateData);
       setEditingTask(null);
       fetchTasks();
-      alert("Task updated successfully!");
+      //alert("Task updated successfully!");
     } catch (error: any) {
-      console.error("Error updating task:", error);
       alert(error.response?.data?.message || "Failed to update task.");
     }
   };
@@ -231,30 +223,23 @@ function App(props: { disableCustomTheme?: boolean }) {
     taskId: number,
     taskCreatorId: number | null
   ) => {
-    // Added taskCreatorId to check ownership
-    // Frontend check: Can user delete tasks in general?
     if (!hasPermission(GLOBALVARS.DELETE_TASK)) {
-      // Check using ID
-      alert("You do not have permission to delete tasks.");
       return;
     }
-    // Frontend check: Can user delete THIS specific task (only their own unless admin-like)
     if (
       !hasPermission(GLOBALVARS.READ_ALL_TASKS) &&
       taskCreatorId !== currentUserId
     ) {
-      // Check using ID for Read_All_Tasks
       alert("You can only delete your own tasks.");
       return;
     }
 
-    if (window.confirm("Are you sure you want to soft-delete this task?")) {
+    if (window.confirm("Are you sure you want to delete this task?")) {
+      // deleting her will only be a soft-delete. the task will still be viewable in the database
       try {
         await deleteTask(taskId);
         fetchTasks();
-        alert("Task soft-deleted successfully!");
       } catch (error: any) {
-        console.error("Error deleting task:", error);
         alert(error.response?.data?.message || "Failed to soft-delete task.");
       }
     }
@@ -438,7 +423,7 @@ function App(props: { disableCustomTheme?: boolean }) {
         <ul style={{ listStyle: "none", padding: 0 }}>
           {tasks.length === 0 &&
           (hasPermission(GLOBALVARS.READ_TASK) ||
-            hasPermission(GLOBALVARS.READ_ALL_TASKS)) ? ( // Check using IDs
+            hasPermission(GLOBALVARS.READ_ALL_TASKS)) ? (
             <p>No tasks found. Create one above or check your permissions.</p>
           ) : tasks.length === 0 ? (
             <p>
@@ -574,7 +559,7 @@ function App(props: { disableCustomTheme?: boolean }) {
                             )}
                           {/* Show Delete button only if user has permission AND can delete THIS task */}
                           {hasPermission(GLOBALVARS.DELETE_TASK) &&
-                            (hasPermission(GLOBALVARS.READ_ALL_TASKS) ||
+                            (hasPermission(GLOBALVARS.ADMINISTRATOR_RIGHTS) ||
                               task.CREATED_BY === currentUserId) && (
                               <Button
                                 onClick={() =>

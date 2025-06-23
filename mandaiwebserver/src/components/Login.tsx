@@ -65,10 +65,6 @@ function Login(
   { onLoginSuccess }: LoginProps,
   props: { disableCustomTheme?: boolean }
 ) {
-  // const [emailError, setEmailError] = React.useState(false);
-  // const [emailErrorMessage, setEmailErrorMessage] = React.useState("");
-  // const [passwordError, setPasswordError] = React.useState(false);
-  // const [passwordErrorMessage, setPasswordErrorMessage] = React.useState("");
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
@@ -79,7 +75,7 @@ function Login(
 
     try {
       const data = await loginUser(username, password);
-      localStorage.setItem("token", data.token); // Store the token
+      localStorage.setItem("token", data.token); // Store the jwt token so that we can take it out and autheticate any users.
       onLoginSuccess(); // Notify parent component of successful login
     } catch (err: any) {
       console.error("Login failed:", err);
