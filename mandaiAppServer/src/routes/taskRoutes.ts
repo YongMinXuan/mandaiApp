@@ -9,6 +9,5 @@ router.get("/:id", taskController.getTaskById);
 router.post("/", taskController.createTask);
 router.put("/:id", taskController.updateTask);
 router.delete("/:id", taskController.softDeleteTask); // Soft delete
-//router.get("/hashpasswords/:id", taskController.updateTask);
 
 export default router;

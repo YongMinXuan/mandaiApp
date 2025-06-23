@@ -56,8 +56,9 @@ export class TaskController {
 
   async createTask(req: Request, res: Response): Promise<void> {
     try {
+      //i check the user's permissions. and see if he can acesss it.
       const createdByUserId = req.user?.ACCESS_ID;
-      const userPermissions = req.user?.permissions || []; // NEW: Get permissions (now number[]) from JWT
+      const userPermissions = req.user?.permissions || [];
 
       if (!createdByUserId) {
         res.status(401).json({ message: "Unauthorized: User ID not found." });
@@ -85,7 +86,7 @@ export class TaskController {
     try {
       const id = parseInt(req.params.id, 10);
       const requestingUserId = req.user?.ACCESS_ID;
-      const userPermissions = req.user?.permissions || []; // NEW: Get permissions (now number[]) from JWT
+      const userPermissions = req.user?.permissions || [];
 
       if (!requestingUserId) {
         res.status(401).json({ message: "Unauthorized: User ID not found." });
@@ -115,7 +116,7 @@ export class TaskController {
     try {
       const id = parseInt(req.params.id, 10);
       const requestingUserId = req.user?.ACCESS_ID;
-      const userPermissions = req.user?.permissions || []; // NEW: Get permissions (now number[]) from JWT
+      const userPermissions = req.user?.permissions || [];
 
       if (!requestingUserId) {
         res.status(401).json({ message: "Unauthorized: User ID not found." });

@@ -9,7 +9,6 @@ import {
 } from "typeorm";
 import { ACCESS_MATRIX } from "./ACCESS_MATRIX";
 
-// Define a custom transformer for boolean to TINYINT(1)
 const booleanToTinyIntTransformer: ValueTransformer = {
   from: (databaseValue: number | null): boolean | null => {
     if (databaseValue === null) {
@@ -53,7 +52,7 @@ export class TASKS {
     name: "IS_DELETED",
     type: "tinyint", // Use tinyint directly for 0/1 storage
     default: 0, // Default to 0 (false)
-    transformer: booleanToTinyIntTransformer, // Apply the transformer
+    transformer: booleanToTinyIntTransformer,
   })
   IS_DELETED!: boolean; // Still use boolean in your entity
 

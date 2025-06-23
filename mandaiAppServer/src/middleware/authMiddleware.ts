@@ -6,7 +6,7 @@ dotenv.config();
 // Extend Request interface to include the user property with permissions (number array)
 declare module "express-serve-static-core" {
   interface Request {
-    user?: { ACCESS_ID: number; USERNAME: string; permissions: number[] }; // UPDATED: permissions is number[]
+    user?: { ACCESS_ID: number; USERNAME: string; permissions: number[] };
   }
 }
 

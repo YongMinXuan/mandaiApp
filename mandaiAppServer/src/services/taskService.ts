@@ -42,7 +42,6 @@ export class TaskService {
       userPermissions,
       GLOBALVARS.READ_ALL_TASKS
     );
-    console.log("userPermissions", userPermissions);
 
     if (!canReadAllTasks) {
       // If not allowed to read all, only return tasks created by this user
@@ -175,7 +174,7 @@ export class TaskService {
       throw new Error("Unauthorized to delete tasks.");
     }
 
-    // Further authorization: If not 'admin' (Read_All_Tasks), user can only delete their own task.
+    // Further authorization: If not 'admin' , user can only delete their own task.
     if (!adminRights && task.CREATED_BY !== requestingUserId) {
       throw new Error("Unauthorized to delete other users' tasks.");
     }
