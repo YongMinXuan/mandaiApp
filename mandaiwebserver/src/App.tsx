@@ -9,13 +9,20 @@ import AppTheme from "../src/theme/AppTheme";
 import MuiCard from "@mui/material/Card";
 import { styled } from "@mui/material/styles";
 import ColorModeSelect from "../src/theme/ColorModeSelect";
-import { Button, FormControl, TextField } from "@mui/material";
+import {
+  AppBar,
+  Button,
+  FormControl,
+  TextField,
+  Toolbar,
+  useTheme,
+} from "@mui/material";
 import Typography from "@mui/material/Typography";
 import Modal from "@mui/material/Modal";
 import Box from "@mui/material/Box";
 
 const style = {
-  position: "absolute",
+  position: "absolute" as "absolute",
   top: "50%",
   left: "50%",
   transform: "translate(-50%, -50%)",
@@ -24,8 +31,8 @@ const style = {
   border: "2px solid #000",
   boxShadow: 24,
   p: 4,
+  borderRadius: "8px",
 };
-
 const Card = styled(MuiCard)(({ theme }) => ({
   display: "flex",
   flexDirection: "column",
@@ -48,6 +55,7 @@ const Card = styled(MuiCard)(({ theme }) => ({
 // npm install jwt-decode
 
 function App(props: { disableCustomTheme?: boolean }) {
+  const theme = useTheme();
   const [tasks, setTasks] = useState<Task[]>([]);
   const [newTaskTitle, setNewTaskTitle] = useState<string>("");
   const [newTaskDescription, setNewTaskDescription] = useState<string>("");
@@ -250,347 +258,310 @@ function App(props: { disableCustomTheme?: boolean }) {
   }
 
   return (
-    <AppTheme {...props}>
-      <div style={{ padding: "20px", fontFamily: "Arial, sans-serif" }}>
-        {hasPermission(GLOBALVARS.CREATE_TASK) && ( // Check using ID
-          <>
-            {/* <h2>Create New Task</h2>
-            <form onSubmit={handleCreateTask}>
-              <div style={{ marginBottom: "10px" }}>
-                <label htmlFor="title">Title:</label>
-                <input
-                  type="text"
-                  id="title"
-                  value={newTaskTitle}
-                  onChange={(e) => setNewTaskTitle(e.target.value)}
-                  required
-                  style={{
-                    width: "calc(100% - 100px)",
-                    padding: "8px",
-                    marginLeft: "10px",
-                  }}
-                />
-              </div>
-              <div style={{ marginBottom: "10px" }}>
-                <label htmlFor="description">Description:</label>
-                <textarea
-                  id="description"
-                  value={newTaskDescription}
-                  onChange={(e) => setNewTaskDescription(e.target.value)}
-                  rows={3}
-                  style={{
-                    width: "calc(100% - 100px)",
-                    padding: "8px",
-                    marginLeft: "10px",
-                  }}
-                ></textarea>
-              </div>
+    <Box sx={{ flexGrow: 1 }}>
+      {" "}
+      {/* Main container for the whole app */}
+      {/* Header AppBar */}
+      <AppTheme {...props}>
+        <AppBar
+          position="static"
+          color="transparent"
+          // sx={{
+          //   borderRadius: 2, // Rounded corners for AppBar
+          //   marginBottom: 3, // Spacing below the AppBar
+          // }}
+        >
+          <Toolbar sx={{ justifyContent: "space-between" }}>
+            {/* Left Side: Create Task Button */}
+            {hasPermission(GLOBALVARS.CREATE_TASK) && (
               <Button
-                type="submit"
-                style={{
-                  padding: "10px 15px",
-                  backgroundColor: "#4CAF50",
-                  color: "white",
-                  border: "none",
-                  borderRadius: "5px",
-                  cursor: "pointer",
-                }}
-              >
-                Add Task
-              </Button>
-            </form> */}
-
-            <div>
-              <Button
-                style={{
-                  padding: "8px 15px",
-                  backgroundColor: "#00973d",
-                  color: "white",
-                  border: "none",
-                  borderRadius: "5px",
-                  cursor: "pointer",
-                  position: "fixed",
-                  top: "1rem",
-                  left: "1rem",
-                }}
-                onClick={handleOpenCreate}
+                variant="contained"
+                color="success"
+                onClick={() => handleOpenCreate()} // Open modal on click
+                sx={{ color: "white" }}
               >
                 Create Tasks
               </Button>
-              <Modal
-                open={open}
-                onClose={handleCloseCreate}
-                aria-labelledby="modal-modal-title"
-                aria-describedby="modal-modal-description"
-              >
-                <Box sx={style}>
-                  <Typography
-                    id="modal-modal-title"
-                    variant="h6"
-                    component="h2"
-                  >
-                    Create your tasks
-                  </Typography>
-                  <form onSubmit={handleCreateTask}>
-                    <div style={{ marginBottom: "10px" }}>
-                      <label htmlFor="title">Title:</label>
-                      <input
-                        type="text"
-                        id="title"
-                        value={newTaskTitle}
-                        onChange={(e) => setNewTaskTitle(e.target.value)}
-                        required
-                        style={{
-                          width: "calc(100% - 100px)",
-                          padding: "8px",
-                          marginLeft: "10px",
-                        }}
-                      />
-                    </div>
-                    <div style={{ marginBottom: "10px" }}>
-                      <label htmlFor="description">Description:</label>
-                      <textarea
-                        id="description"
-                        value={newTaskDescription}
-                        onChange={(e) => setNewTaskDescription(e.target.value)}
-                        rows={3}
-                        style={{
-                          width: "calc(100% - 50px)",
-                          height: "calc(100% - 50px)",
+            )}
 
-                          padding: "8px",
-                          //marginLeft: "10px",
-                        }}
-                      ></textarea>
-                    </div>
-                    <Button
-                      type="submit"
-                      style={{
-                        padding: "10px 15px",
-                        backgroundColor: "#4CAF50",
-                        color: "white",
-                        border: "none",
-                        borderRadius: "5px",
-                        cursor: "pointer",
-                      }}
-                    >
-                      Add Task
-                    </Button>
-                  </form>
-                </Box>
-              </Modal>
-            </div>
-          </>
-        )}
-        <ColorModeSelect
-          sx={{ position: "fixed", top: "1rem", right: "6rem" }}
-        />
-        <div
-          style={{
-            display: "flex",
-            justifyContent: "space-between",
-            alignItems: "center",
-            marginBottom: "20px",
-          }}
-        >
-          {/* <h1>Task Management App</h1> */}
-          <Button
-            onClick={handleLogout}
-            style={{
-              padding: "8px 15px",
-              backgroundColor: "#dc3545",
-              color: "white",
-              border: "none",
-              borderRadius: "5px",
-              cursor: "pointer",
-              position: "fixed",
-              top: "1rem",
-              right: "1rem",
-            }}
-          >
-            Logout
-          </Button>
-        </div>
-        {/* Task Creation Form - only visible if user has 'Create Task' permission */}
-        {/* Task List */}
-        <Typography
-          variant="h2"
-          component="h2"
-          sx={{ textAlign: "center", marginBottom: 2 }}
-        >
-          My Tasks{" "}
-        </Typography>{" "}
-        <ul style={{ listStyle: "none", padding: 0 }}>
-          {tasks.length === 0 &&
-          (hasPermission(GLOBALVARS.READ_TASK) ||
-            hasPermission(GLOBALVARS.READ_ALL_TASKS)) ? (
-            <p>No tasks found. Create one above or check your permissions.</p>
-          ) : tasks.length === 0 ? (
-            <p>
-              You do not have permission to view tasks. Please contact an
-              administrator.
-            </p>
-          ) : (
-            tasks.map((task: Task) => (
-              <li
-                key={task.TASK_ID}
-                style={{
-                  marginBottom: "2rem",
-                  //backgroundColor: task.IS_DELETED === true ? "#fdd" : "#fff", // Highlight soft-deleted tasks (boolean)
-                }}
+            {/* Right Side: Theme Switch and Logout Button */}
+            <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+              {" "}
+              {/* Use Box for grouping and spacing */}
+              {/* Dark/Light Mode Switch - now a separate component */}
+              <ColorModeSelect />
+              {/* Logout Button */}
+              <Button
+                variant="contained"
+                color="error"
+                onClick={handleLogout}
+                sx={{ ml: 1 }}
               >
-                <Card variant="outlined">
-                  {editingTask &&
-                  editingTask.TASK_ID === task.TASK_ID &&
-                  hasPermission(GLOBALVARS.UPDATE_TASK) ? (
-                    // Editing form for task
-                    <form onSubmit={handleUpdateTask}>
-                      <input
-                        type="text"
-                        value={editingTask.TITLE}
-                        onChange={(e) =>
-                          setEditingTask({
-                            ...editingTask,
-                            TITLE: e.target.value,
-                          })
-                        }
-                        required
-                        style={{
-                          width: "100%",
-                          padding: "8px",
-                          marginBottom: "8px",
-                        }}
-                      />
-                      <textarea
-                        value={editingTask.DESCRIPTION || ""}
-                        onChange={(e) =>
-                          setEditingTask({
-                            ...editingTask,
-                            DESCRIPTION: e.target.value,
-                          })
-                        }
-                        rows={2}
-                        style={{
-                          width: "100%",
-                          padding: "8px",
-                          marginBottom: "8px",
-                        }}
-                      ></textarea>
-                      <select
-                        value={editingTask.STATUS}
-                        onChange={(e) =>
-                          setEditingTask({
-                            ...editingTask,
-                            STATUS: e.target.value as any,
-                          })
-                        }
-                        style={{ padding: "8px", marginRight: "8px" }}
-                      >
-                        <option value="pending">Pending</option>
-                        <option value="in-progress">In-Progress</option>
-                        <option value="completed">Completed</option>
-                        <option value="blocked">Blocked</option>
-                      </select>
-                      <Button
-                        type="submit"
-                        style={{
-                          padding: "8px 12px",
-                          backgroundColor: "#007bff",
-                          color: "white",
-                          border: "none",
-                          borderRadius: "5px",
-                          cursor: "pointer",
-                          marginRight: "5px",
-                        }}
-                      >
-                        Save
-                      </Button>
-                      <Button
-                        type="button"
-                        onClick={() => setEditingTask(null)}
-                        style={{
-                          padding: "8px 12px",
-                          backgroundColor: "#dc3545",
-                          color: "white",
-                          border: "none",
-                          borderRadius: "5px",
-                          cursor: "pointer",
-                        }}
-                      >
-                        Cancel
-                      </Button>
-                    </form>
-                  ) : (
-                    // Display task details
-                    <div>
-                      <h3>
-                        {task.TITLE} {task.IS_DELETED === true && " (DELETED)"}
-                      </h3>
-                      <p>Description: {task.DESCRIPTION || "N/A"}</p>
-                      <p>Status: {task.STATUS}</p>
-                      <p>
-                        Created by: {task.createdBy?.USERNAME || "Unknown User"}
-                      </p>{" "}
-                      {/* Display username if loaded */}
-                      <p>
-                        Last Updated:{" "}
-                        {new Date(task.UPDATED_AT).toLocaleString()}
-                      </p>
-                      {task.IS_DELETED === false && (
-                        <>
-                          {/* Show Edit button only if user has permission AND can edit THIS task */}
-                          {hasPermission(GLOBALVARS.UPDATE_TASK) &&
-                            (hasPermission(GLOBALVARS.READ_ALL_TASKS) ||
-                              task.CREATED_BY === currentUserId) && (
-                              <Button
-                                onClick={() => handleEditClick(task)}
-                                style={{
-                                  padding: "8px 12px",
-                                  backgroundColor: "#ffc107",
-                                  color: "white",
-                                  border: "none",
-                                  borderRadius: "5px",
-                                  cursor: "pointer",
-                                  marginRight: "5px",
-                                }}
-                              >
-                                Edit
-                              </Button>
-                            )}
-                          {/* Show Delete button only if user has permission AND can delete THIS task */}
-                          {hasPermission(GLOBALVARS.DELETE_TASK) &&
-                            (hasPermission(GLOBALVARS.ADMINISTRATOR_RIGHTS) ||
-                              task.CREATED_BY === currentUserId) && (
-                              <Button
-                                onClick={() =>
-                                  handleDeleteTask(
-                                    task.TASK_ID,
-                                    task.CREATED_BY
-                                  )
-                                }
-                                style={{
-                                  padding: "8px 12px",
-                                  backgroundColor: "#dc3545",
-                                  color: "white",
-                                  border: "none",
-                                  borderRadius: "5px",
-                                  cursor: "pointer",
-                                }}
-                              >
-                                Delete
-                              </Button>
-                            )}
-                        </>
-                      )}
-                    </div>
-                  )}
-                </Card>{" "}
-              </li>
-            ))
-          )}
-        </ul>
-      </div>
-    </AppTheme>
+                Logout
+              </Button>
+            </Box>
+          </Toolbar>
+        </AppBar>
+        {/* Create Task Modal */}
+        <Modal
+          open={open}
+          onClose={() => handleCloseCreate()}
+          aria-labelledby="create-task-modal-title"
+          aria-describedby="create-task-modal-description"
+        >
+          <Box sx={style}>
+            <Typography
+              id="create-task-modal-title"
+              variant="h6"
+              component="h2"
+              sx={{ mb: 2 }}
+            >
+              Create your tasks
+            </Typography>
+            <form onSubmit={handleCreateTask}>
+              <TextField
+                fullWidth
+                id="newTaskTitle"
+                label="Title"
+                variant="outlined"
+                value={newTaskTitle}
+                onChange={(e) => setNewTaskTitle(e.target.value)}
+                required
+                sx={{ mb: 2 }} // Margin bottom for spacing
+              />
+              <TextField
+                fullWidth
+                id="newTaskDescription"
+                label="Description"
+                multiline // Ensure multiline is active
+                minRows={3} // Set minimum rows
+                maxRows={10} // Set maximum rows before scrolling
+                variant="outlined" // Ensure consistent variant
+                value={newTaskDescription}
+                onChange={(e) => setNewTaskDescription(e.target.value)}
+                sx={{ mb: 2 }} // Margin bottom for spacing
+              />
+              <Button
+                type="submit"
+                variant="contained"
+                color="success"
+                sx={{ mr: 1 }}
+              >
+                Add Task
+              </Button>
+              <Button
+                variant="outlined"
+                color="error"
+                onClick={() => handleCloseCreate()}
+              >
+                Cancel
+              </Button>
+            </form>
+          </Box>
+        </Modal>
+        {/* Main Content */}
+        <Box sx={{ padding: "20px" }}>
+          {" "}
+          {/* Add padding to main content area */}
+          {/* Task Creation Form has been moved into the Modal */}
+          {/* Task List */}
+          <Typography
+            variant="h5"
+            component="h2"
+            sx={{ textAlign: "center", marginBottom: 2 }}
+          >
+            My Tasks
+          </Typography>
+          <ul style={{ listStyle: "none", padding: 0 }}>
+            {tasks.length === 0 &&
+            (hasPermission(GLOBALVARS.READ_TASK) ||
+              hasPermission(GLOBALVARS.READ_ALL_TASKS)) ? (
+              <Typography
+                component="p"
+                color="text.secondary"
+                sx={{ textAlign: "center" }}
+              >
+                No tasks found. Create one above or check your permissions.
+              </Typography>
+            ) : tasks.length === 0 ? (
+              <Typography
+                component="p"
+                color="error"
+                sx={{ textAlign: "center" }}
+              >
+                You do not have permission to view tasks. Please contact an
+                administrator.
+              </Typography>
+            ) : (
+              tasks.map((task) => (
+                <li
+                  key={task.TASK_ID}
+                  style={{
+                    marginBottom: theme.spacing(2), // Responsive margin between cards
+                  }}
+                >
+                  <MuiCard
+                    variant="outlined"
+                    sx={{
+                      display: "flex",
+                      flexDirection: "column",
+                      alignSelf: "center",
+                      width: "100%",
+                      padding: theme.spacing(2), // Reduced card padding for list items
+                      gap: theme.spacing(1),
+                      // margin: "auto", // Removed margin:auto if not needed
+                      boxShadow:
+                        task.IS_DELETED === true
+                          ? "none"
+                          : "hsla(220, 30%, 5%, 0.05) 0px 5px 15px 0px", // Simplified boxShadow
+                      backgroundColor:
+                        task.IS_DELETED === true
+                          ? theme.palette.action.disabledBackground
+                          : theme.palette.background.paper,
+                      color: theme.palette.text.primary,
+                      opacity: task.IS_DELETED === true ? 0.7 : 1, // Visually dim deleted tasks
+                    }}
+                  >
+                    {editingTask && editingTask.TASK_ID === task.TASK_ID ? (
+                      // Editing form for task
+                      <form onSubmit={handleUpdateTask}>
+                        <TextField
+                          fullWidth
+                          label="Title"
+                          variant="outlined"
+                          value={editingTask.TITLE}
+                          onChange={(e) =>
+                            setEditingTask({
+                              ...editingTask,
+                              TITLE: e.target.value,
+                            })
+                          }
+                          required
+                          sx={{ mb: 1 }}
+                        />
+                        <TextField
+                          fullWidth
+                          label="Description"
+                          multiline
+                          rows={2}
+                          value={editingTask.DESCRIPTION || ""}
+                          onChange={(e) =>
+                            setEditingTask({
+                              ...editingTask,
+                              DESCRIPTION: e.target.value,
+                            })
+                          }
+                          sx={{ mb: 1 }}
+                        />
+                        <FormControl fullWidth sx={{ mb: 2 }}>
+                          <select
+                            value={editingTask.STATUS}
+                            onChange={(e) =>
+                              setEditingTask({
+                                ...editingTask,
+                                STATUS: e.target.value as any,
+                              })
+                            }
+                            style={{
+                              padding: "8px",
+                              border: `1px solid ${theme.palette.divider}`,
+                              borderRadius: "4px",
+                              backgroundColor: theme.palette.background.default,
+                              color: theme.palette.text.primary,
+                              width: "100%",
+                            }}
+                          >
+                            <option value="pending">Pending</option>
+                            <option value="in-progress">In-Progress</option>
+                            <option value="completed">Completed</option>
+                            <option value="blocked">Blocked</option>
+                          </select>
+                        </FormControl>
+                        <Button
+                          type="submit"
+                          variant="contained"
+                          color="primary"
+                          sx={{ mr: 1 }}
+                        >
+                          Save
+                        </Button>
+                        <Button
+                          type="button"
+                          variant="outlined"
+                          color="error"
+                          onClick={() => setEditingTask(null)}
+                        >
+                          Cancel
+                        </Button>
+                      </form>
+                    ) : (
+                      // Display task details
+                      <Box>
+                        <Typography
+                          variant="h6"
+                          component="h3"
+                          color="text.secondary"
+                        >
+                          {task.TITLE} {task.IS_DELETED === true && "(DELETED)"}
+                        </Typography>
+                        <Typography variant="body2" color="text.secondary">
+                          Description: {task.DESCRIPTION || "N/A"}
+                        </Typography>
+                        <Typography variant="body2" color="text.secondary">
+                          Status: {task.STATUS}
+                        </Typography>
+                        <Typography variant="body2" color="text.secondary">
+                          Created by:{" "}
+                          {task.createdBy?.USERNAME || "Unknown User"}
+                        </Typography>
+                        <Typography variant="caption" color="text.disabled">
+                          Last Updated:{" "}
+                          {new Date(task.UPDATED_AT).toLocaleString()}
+                        </Typography>
+                        {task.IS_DELETED === false && (
+                          <Box sx={{ mt: 1 }}>
+                            {/* Show Edit button only if user has permission AND can edit THIS task */}
+                            {hasPermission(GLOBALVARS.UPDATE_TASK) &&
+                              (hasPermission(GLOBALVARS.READ_ALL_TASKS) ||
+                                task.CREATED_BY === currentUserId) && (
+                                <Button
+                                  variant="outlined"
+                                  color="warning"
+                                  onClick={() => handleEditClick(task)}
+                                  sx={{ mr: 1 }}
+                                >
+                                  Edit
+                                </Button>
+                              )}
+                            {/* Show Delete button only if user has permission AND can delete THIS task */}
+                            {hasPermission(GLOBALVARS.DELETE_TASK) &&
+                              (hasPermission(GLOBALVARS.READ_ALL_TASKS) ||
+                                task.CREATED_BY === currentUserId) && (
+                                <Button
+                                  variant="outlined"
+                                  color="error"
+                                  onClick={() =>
+                                    handleDeleteTask(
+                                      task.TASK_ID,
+                                      task.CREATED_BY
+                                    )
+                                  }
+                                >
+                                  Delete
+                                </Button>
+                              )}
+                          </Box>
+                        )}
+                      </Box>
+                    )}
+                  </MuiCard>{" "}
+                </li>
+              ))
+            )}
+          </ul>
+        </Box>
+      </AppTheme>
+    </Box>
   );
 }
 

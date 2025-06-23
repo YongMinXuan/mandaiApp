@@ -117,7 +117,7 @@ function Login(
       <CssBaseline enableColorScheme />
       <SignInContainer direction="column" justifyContent="space-between">
         <ColorModeSelect
-          sx={{ position: "fixed", top: "1rem", right: "1rem" }}
+          sx={{ position: "fixed", top: "1rem", right: "1rem", height: 42 }}
         />
         <Card variant="outlined">
           <Typography
