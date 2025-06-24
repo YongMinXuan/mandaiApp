@@ -66,8 +66,8 @@ function App(props: { disableCustomTheme?: boolean }) {
   const [open, setOpen] = React.useState(false);
   const handleOpenCreate = () => setOpen(true);
   const handleCloseCreate = () => {
-    setNewTaskTitle("");
-    setNewTaskDescription("");
+    // setNewTaskTitle("");
+    // setNewTaskDescription("");
     setOpen(false);
   };
   useEffect(() => {
