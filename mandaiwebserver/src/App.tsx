@@ -65,7 +65,11 @@ function App(props: { disableCustomTheme?: boolean }) {
   const [currentUserId, setCurrentUserId] = useState<number | null>(null);
   const [open, setOpen] = React.useState(false);
   const handleOpenCreate = () => setOpen(true);
-  const handleCloseCreate = () => setOpen(false);
+  const handleCloseCreate = () => {
+    setNewTaskTitle("");
+    setNewTaskDescription("");
+    setOpen(false);
+  };
   useEffect(() => {
     const token = localStorage.getItem("token");
     if (token) {
